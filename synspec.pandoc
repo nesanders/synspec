@@ -1,0 +1,50 @@
+ 
+Pickles Stellar Spectral Flux Library 
+ The UVKLIB spectral library (A.J. Pickles, PASP 110, 863, 1998) provides spectra for different spectral types in the domain 115-2500 nm with a step size of 0.5 nm.: ftp://cdsarc.u-strasbg.fr/pub/cats/J/PASP/110/863/
+ 
+ Even better Pickles source: http://www.ifa.hawaii.edu/users/pickles/AJP/hilib.html
+ 
+ Line chart with mouseover: http://bl.ocks.org/mbostock/3902569
+ 
+ Difference chart (to show extinction):
+ http://bl.ocks.org/mbostock/3894205
+ 
+ Pan and zoom: http://bl.ocks.org/mbostock/3892919
+ 
+ http://www.d3noob.org/2012/12/getting-data.html
+ 
+ You can echo to the debug console using console.log()
+ 
+ It is critical to have TAB seperated values if using tsv (spaces won't do)
+ 
+ 
+ Ideas
+ 
+ * Adjustable extinction
+ * Overplot filter definitions
+ * Adjustable redshift
+ * Adjustable IMF (specify slope or adjust histogram?) and age
+ * Show metallicity and SFR-adjustable emission lines
+ * Zoomable
+ * Fancy CSS
+ * Updatable
+ 
+ Update example: http://bl.ocks.org/mbostock/3808218
+ 
+ ## Passbands ##
+ 
+ Following http://bl.ocks.org/mbostock/3894205
+ 
+ 
+
+Maybe I should use this as my base: http://bl.ocks.org/mbostock/1667367
+
+
+
+
+# Tips for python users #
+
+* Use Math.pow(number,exponent) to exponentiate (not ^ or **)
+* Use array.filter method in place of of numpy.where()...  *or should it be array.filter?*
+
+

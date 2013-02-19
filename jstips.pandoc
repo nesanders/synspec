@@ -1,0 +1,29 @@
+# Tips on Javascript for Python Users #
+
+* Declare new variables with *var*
+* End lines with semicolon (;)
+* Comment with *//*
+
+  var margin = {top: 30, right: 20, bottom: 30, left: 50};
+
+* Use *map* for elementwise array operations (or *forEach* to modify in place)
+
+  x.domain(d3.extent(data.map(function(d) { return d.x; })));
+  // this sets the x-range of the d3 plot to the min and max
+  // of the data d by using a map function.  d.x refers to the
+  // x values of the d array.
+
+* Import libraries by sourcing scripts
+
+  <script src="d3.v3.min.js"></script>
+
+* Exponentiate with the *Math* library
+
+  var y = Math.pow(x,2); // y = x^2
+  
+* Just like in python, variables are local (confined within function) or global if defined at the top-level script
+
+* Interact with user-modified HTML elements using *document.getElementById*
+* Use *console.log()* to print to the command line.
+
+

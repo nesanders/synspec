@@ -285,7 +285,7 @@ function update() {
   var sK = document.getElementById('TBsK').value;
   var sM = document.getElementById('TBsM').value;
 
-  // Computer new stellar composiet
+  // Computer new stellar composite
   Sdata.f = (Sdata.map(function(d) { return d.bv*sB; }) 
       + Sdata.map(function(d) { return d.av*sA; }) 
       + Sdata.map(function(d) { return d.fv*sF; }) 
@@ -350,17 +350,20 @@ function CCMextinct(l,EBmV,Rv) {
 
 
 
+<h2>Galaxy parameters</h2>
 
-
+<h3>Intrinsic</h3>
 <form method="post" action="">
-Stellar population<br>
-B<textarea id="TBsB" cols="5" rows="1">1</textarea><br>
-A<textarea id="TBsA" cols="5" rows="1">1</textarea><br>
-F<textarea id="TBsF" cols="5" rows="1">1</textarea><br>
-G<textarea id="TBsG" cols="5" rows="1">1</textarea><br>
-K<textarea id="TBsK" cols="5" rows="1">1</textarea><br>
-M<textarea id="TBsM" cols="5" rows="1">1</textarea><br>
-<br>
+<p>Stellar constituents:  <small>(Total population will be normalized)</small></p>
+B<textarea id="TBsB" cols="3" rows="1">1</textarea>
+A<textarea id="TBsA" cols="3" rows="1">1</textarea>
+F<textarea id="TBsF" cols="3" rows="1">1</textarea>
+G<textarea id="TBsG" cols="3" rows="1">1</textarea>
+K<textarea id="TBsK" cols="3" rows="1">1</textarea>
+M<textarea id="TBsM" cols="3" rows="1">1</textarea>
+
+
+<h3>Extrinsic</h3>
 
 Redshift 
 <textarea id="TBredshift" cols="10" rows="1">0.0</textarea>

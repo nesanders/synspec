@@ -5,6 +5,8 @@
 
 <body>
 
+<h2>Javascript galaxy spectrum synthesizer</h2>
+
 <script src="d3.v3.min.js"></script>
 <script>
 
@@ -33,13 +35,13 @@ var Sdata;
 //Create big line plot
 var line = d3.svg.line()
     .interpolate("monotone")
-    .x(function(d) { return x(d.w); })
+    .x(function(d) { return x(d.wz); })
     .y(function(d) { return y(d.f); });
 
 //Create little line plot
 var line2 = d3.svg.line()
     .interpolate("monotone")
-    .x(function(d) { return x2(d.w); })
+    .x(function(d) { return x2(d.wz); })
     .y(function(d) { return y2(d.f); });
 
 // Create passband plots
@@ -93,6 +95,7 @@ var context = svg.append("g")
 d3.tsv("NES_pickles.tsv", function(error, data) {
   data.forEach(function(d) {
     d.w = +d.w;
+    d.wz = +d.w;
     d.biii = +d.biii;
     d.aiii = +d.aiii;
     d.fiii = +d.fiii;
@@ -106,7 +109,7 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
     d.kv = +d.kv;
     d.mv = +d.mv;
     //silly synthetic spectrum
-    d.f = 0.5*d.miii + 0.1*d.biii + 2*d["fv"];
+    d.f = (d.bv + d.av + d.fv + d.gv + d.kv + d.mv)/6.;
     // Load each stellar class spectrum with a loop
     fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
   });
@@ -115,7 +118,7 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
   Sdata=data;
 
 //   Set plot dimensions
-  x.domain(d3.extent(data.map(function(d) { return d.w; })));
+  x.domain(d3.extent(data.map(function(d) { return d.wz; })));
   y.domain([0, d3.max(data.map(function(d) { return d.f; }))]);
   x2.domain(x.domain());
   y2.domain(y.domain());
@@ -260,8 +263,8 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
   context.append("g")
       .attr("class", "x brush")
       .call(OnBrush)
-      .selectAll("rect")
-      .attr("y", -6)
+    .selectAll("rect")
+      .attr("y", -6) 
       .attr("height", height2 + 7)
       .attr("width", width + 7);
 
@@ -286,14 +289,46 @@ function update() {
   var sM = document.getElementById('TBsM').value;
 
   // Computer new stellar composite
-  Sdata.f = (Sdata.map(function(d) { return d.bv*sB; }) 
-      + Sdata.map(function(d) { return d.av*sA; }) 
-      + Sdata.map(function(d) { return d.fv*sF; }) 
-      + Sdata.map(function(d) { return d.gv*sG; }) 
-      + Sdata.map(function(d) { return d.kv*sK; }) 
-      + Sdata.map(function(d) { return d.mv*sM; }) 
-      /(sB+sA+sF+sG+sK+sM));
-
+  Sdata.forEach(function(el,ind,ar) { 
+    return (
+      ar[ind].f = CCMextinct(d.w,extinction/3.1,3.1)*(ar[ind].bv*sB + ar[ind].av*sA + ar[ind].fv*sF + ar[ind].gv*sG + ar[ind].kv*sK + ar[ind].mv*sM)/(sB+sA+sF+sG+sK+sM);
+      ar[ind].wz = ar[ind].w*(1+redshift);
+    });
+  
+  context.selectAll("path")
+    .data([Sdata])
+    .attr("d",line2)
+    .transition()
+    .duration(2000);
+    
+  focus.selectAll("path")
+    .data([Sdata])
+    .attr("d",line)
+    .transition()
+    .duration(2000);
+    
+    //   Set plot dimensions
+  x.domain(d3.extent(Sdata.map(function(d) { return d.wz; })));
+  y.domain([0, d3.max(Sdata.map(function(d) { return d.f; }))]);
+  x2.domain(x.domain());
+  y2.domain(y.domain());
+  /*
+  // Select all nodes
+  node = svg.selectAll(".node")
+    .data(Sdata, String);
+  
+  // update lines
+    node.each(function(d, i) {
+        single = d3.select(this)
+        single.selectAll("line")
+            .transition()
+            .attr("width", scale)
+            .attr("x", d.w*(1+redshift))
+            .attr("y", d.f*CCMextinct(d.w,extinction/3.1,3.1))
+            .duration(300);
+    })
+  */
+/*
   cline.datum(Sdata);
   cline2.datum(Sdata);
 
@@ -301,8 +336,8 @@ function update() {
   var objs = d3.select("body").transition();
 
   objs.select(".line")
-    .attr("x",function(d) { return x(d.w*(1+redshift)); console.log(d.w)})
-    .attr("y",function(d) { return y(d.f)*CCMextinct(d.w,extinction/3.1,3.1); });
+    .attr("x",function(d) { return x(d.w*(1+redshift)); })
+    .attr("y",function(d) { return y(d.f)*CCMextinct(d.w,extinction/3.1,3.1); });*/
 
 //   objs.select(".line2")
 //     .attr("x",function(d) { return x(d.w*(1+redshift)); })
@@ -341,6 +376,8 @@ function CCMextinct(l,EBmV,Rv) {
     var Al = (a+b/Rv)*(AV);
     return Math.pow(10,Al/2.5);
 }
+
+update();update();
 
 </script>
 

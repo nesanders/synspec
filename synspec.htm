@@ -111,14 +111,14 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
     //silly synthetic spectrum
     d.f = (d.bv + d.av + d.fv + d.gv + d.kv + d.mv)/6.;
     // Load each stellar class spectrum with a loop
-    fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
+//     fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
   });
 
 // Save data to global variable for later use
   Sdata=data;
 
 //   Set plot dimensions
-  x.domain(d3.extent(data.map(function(d) { return d.wz; })));
+  x.domain(d3.extent(data.map(function(d) { return d.w; })));
   y.domain([0, d3.max(data.map(function(d) { return d.f; }))]);
   x2.domain(x.domain());
   y2.domain(y.domain());
@@ -289,11 +289,13 @@ function update() {
   var sM = document.getElementById('TBsM').value;
 
   // Computer new stellar composite
-  Sdata.forEach(function(el,ind,ar) { 
-    return (
-      ar[ind].f = CCMextinct(d.w,extinction/3.1,3.1)*(ar[ind].bv*sB + ar[ind].av*sA + ar[ind].fv*sF + ar[ind].gv*sG + ar[ind].kv*sK + ar[ind].mv*sM)/(sB+sA+sF+sG+sK+sM);
-      ar[ind].wz = ar[ind].w*(1+redshift);
-    });
+  Sdata.forEach(function(el,ind,ar) { return (
+    ar[ind].wz = ar[ind].w*(1+redshift)
+  )});
+  
+  Sdata.forEach(function(el,ind,ar) { return (
+      ar[ind].f = CCMextinct(ar[ind].wz,extinction/3.1,3.1)*(ar[ind].bv*sB + ar[ind].av*sA + ar[ind].fv*sF + ar[ind].gv*sG + ar[ind].kv*sK + ar[ind].mv*sM)/(sB+sA+sF+sG+sK+sM)
+  )});
   
   context.selectAll("path")
     .data([Sdata])
@@ -308,7 +310,7 @@ function update() {
     .duration(2000);
     
     //   Set plot dimensions
-  x.domain(d3.extent(Sdata.map(function(d) { return d.wz; })));
+  x.domain(d3.extent(Sdata.map(function(d) { return d.w; })));
   y.domain([0, d3.max(Sdata.map(function(d) { return d.f; }))]);
   x2.domain(x.domain());
   y2.domain(y.domain());
@@ -408,7 +410,7 @@ Redshift
 
 <br>
 Extinction (A<sub>V</sub> (mag); R<sub>V</sub>=3.1) 
-<textarea id="TBextinction" cols="10" rows="1">1.0</textarea>
+<textarea id="TBextinction" cols="10" rows="1">0.0</textarea>
 <!-- <input type="submit" value="Update" /> -->
 </form>
 

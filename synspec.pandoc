@@ -20,14 +20,15 @@ Pickles Stellar Spectral Flux Library
  
  Ideas
  
- * Adjustable extinction
- * Overplot filter definitions
- * Adjustable redshift
- * Adjustable IMF (specify slope or adjust histogram?) and age
+ * ~~Adjustable extinction~~
+ * ~~Overplot filter definitions~~
+ * ~~Adjustable redshift~~
+ * ~~Adjustable IMF (specify slope or adjust histogram?) and age~~
  * Show metallicity and SFR-adjustable emission lines
  * ~~Zoomable~~
  * Fancy CSS
  * Updatable
+ * Fancier IMF adjust
  
  Update example: http://bl.ocks.org/mbostock/3808218
  

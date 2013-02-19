@@ -27,6 +27,8 @@ var brush = d3.svg.brush()
     .x(x2)
     .on("brush", brush);
 
+var Sdata
+
 //Create big line plot
 var line = d3.svg.line()
     .interpolate("monotone")
@@ -108,13 +110,17 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
     fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
   });
 
+// Save data to global variable for later use
+  Sdata=data;
+
+//   Set plot dimensions
   x.domain(d3.extent(data.map(function(d) { return d.w; })));
   y.domain([0, d3.max(data.map(function(d) { return d.f; }))]);
   x2.domain(x.domain());
   y2.domain(y.domain());
 
 // Draw line - big plot
-  focus.append("path")
+  cline = focus.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("clip-path", "url(#clip)")
@@ -138,7 +144,7 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
       .text("Flux");
 
   // Draw line - little plot
-  context.append("path")
+  cline2 = context.append("path")
       .datum(data)
       .attr("class", "line")
       .attr("d", line2);
@@ -255,7 +261,8 @@ d3.tsv("passbands/bess-i.pass", function(error, pdata) {
       .call(OnBrush)
       .selectAll("rect")
       .attr("y", -6)
-      .attr("height", height2 + 7);
+      .attr("height", height2 + 7)
+      .attr("width", width + 7);
 
 
 
@@ -265,21 +272,43 @@ function OnBrush() {
   focus.select(".x.axis").call(xAxis);
 }
 
+});
+
+
+
 function update() {
   // Get user data
-  var redshift = document.getElementById('TBredshift');
-  var extinction = document.getElementById('TBextinction');
+  var redshift = document.getElementById('TBredshift').value;
+  var extinction = document.getElementById('TBextinction').value;
+  var sB = document.getElementById('TBsB').value;
+  var sA = document.getElementById('TBsA').value;
+  var sF = document.getElementById('TBsF').value;
+  var sG = document.getElementById('TBsG').value;
+  var sK = document.getElementById('TBsK').value;
+  var sM = document.getElementById('TBsM').value;
 
-  // Update galaxy spectra
-  line
-    .transition()
-    .attr("x",function(d) { return x(d.w*(1+redshift)); })
-    .attr("y",function(d) { return y(d.f); });
+  // Computer new stellar composiet
+  Sdata.f = (Sdata.map(function(d) { return d.bv*sB; }) 
+      + Sdata.map(function(d) { return d.av*sA; }) 
+      + Sdata.map(function(d) { return d.fv*sF; }) 
+      + Sdata.map(function(d) { return d.gv*sG; }) 
+      + Sdata.map(function(d) { return d.kv*sK; }) 
+      + Sdata.map(function(d) { return d.mv*sM; }) 
+      /(sB+sA+sF+sG+sK+sM));
 
-  line2
-    .transition()
-    .x(function(d) { return x(d.w*(1+redshift)); })
-    .y(function(d) { return y(d.f); });
+  cline.datum(Sdata);
+  cline2.datum(Sdata);
+
+  // Update galaxy spectra using animation (transitions)
+  var objs = d3.select("body").transition();
+
+  objs.select(".line")
+    .attr("x",function(d) { return x(d.w*(1+redshift)); console.log(d.w)})
+    .attr("y",function(d) { return y(d.f)*CCMextinct(d.w,extinction/3.1,3.1); });
+
+//   objs.select(".line2")
+//     .attr("x",function(d) { return x(d.w*(1+redshift)); })
+//     .attr("y",function(d) { return y(d.f)*CCMextinct(d.w,extinction/3.1,3.1); });
 }
 
 function CCMextinct(l,EBmV,Rv) {
@@ -291,30 +320,29 @@ function CCMextinct(l,EBmV,Rv) {
     var y=x-1.82;
     // What regime are we in?
     if (x > 0.3 && x < 1.1) { // Optical/NIR
-      a=Math.pow(0.574*x,1.61);
-      b=Math.pow(-0.527*x,1.61);
+      var a=Math.pow(0.574*x,1.61);
+      var b=Math.pow(-0.527*x,1.61);
     }
     if (x > 1.1 && x < 3.3) {
-      a=1+0.17699*y-0.50447*Math.pow(y,2)-0.02427*Math.pow(y,3)+0.72085*Math.pow(y,4)+0.01979*Math.pow(y,5)-0.77530*Math.pow(y,6)+0.32999*Math.pow(y,7);
-      b=1.41338*y+2.28305*Math.pow(y,2)+1.07233*Math.pow(y,3)-5.38434*Math.pow(y,4)-0.62251*Math.pow(y,5)+5.30260*Math.pow(y,6)-2.09002*Math.pow(y,7);
+      var a=1+0.17699*y-0.50447*Math.pow(y,2)-0.02427*Math.pow(y,3)+0.72085*Math.pow(y,4)+0.01979*Math.pow(y,5)-0.77530*Math.pow(y,6)+0.32999*Math.pow(y,7);
+      var b=1.41338*y+2.28305*Math.pow(y,2)+1.07233*Math.pow(y,3)-5.38434*Math.pow(y,4)-0.62251*Math.pow(y,5)+5.30260*Math.pow(y,6)-2.09002*Math.pow(y,7);
     }
     
     var Fa=-0.04473*Math.pow((x-5.9),2)-0.009779*Math.pow((x-5.9),3);
     var Fb=0.2130*Math.pow((x-5.9),2)+0.1207*Math.pow((x-5.9),3);
     if (x > 3.3 && x < 8) { /// UV and FUV
-      a=1.752-0.316*x-0.104/(Math.pow((x-4.67),2)+0.341)+Fa;
-      b=-3.090+1.825*x+1.206/(Math.pow((x-4.62),2)+0.263)+Fb;
+      var a=1.752-0.316*x-0.104/(Math.pow((x-4.67),2)+0.341)+Fa;
+      var b=-3.090+1.825*x+1.206/(Math.pow((x-4.62),2)+0.263)+Fb;
     }
     if (x > 8 && x < 10) {
-      a=-1.073-0.628*(x-8)+0.137*Math.pow((x-8),2)-0.070*Math.pow((x-8),3);
-      b=13.670+4.257*(x-8)-0.420*Math.pow((x-8),2)+0.374*Math.pow((x-8),3);
+      var a=-1.073-0.628*(x-8)+0.137*Math.pow((x-8),2)-0.070*Math.pow((x-8),3);
+      var b=13.670+4.257*(x-8)-0.420*Math.pow((x-8),2)+0.374*Math.pow((x-8),3);
     }
     //Calculate extinction in magnitudes
     var AV = EBmV*Rv;
     var Al = (a+b/Rv)*(AV);
     return Math.pow(10,Al/2.5);
 }
-});
 
 </script>
 
@@ -582,13 +610,22 @@ function draw() {
 
 
 <form method="post" action="">
+Stellar population<br>
+B<textarea id="TBsB" cols="5" rows="1">1</textarea><br>
+A<textarea id="TBsA" cols="5" rows="1">1</textarea><br>
+F<textarea id="TBsF" cols="5" rows="1">1</textarea><br>
+G<textarea id="TBsG" cols="5" rows="1">1</textarea><br>
+K<textarea id="TBsK" cols="5" rows="1">1</textarea><br>
+M<textarea id="TBsM" cols="5" rows="1">1</textarea><br>
+<br>
+
 Redshift 
-<textarea name="TBredshift" cols="10" rows="1">0.0</textarea>
+<textarea id="TBredshift" cols="10" rows="1">0.0</textarea>
 <!-- <input type="submit" value="Update" /> -->
 
 <br>
 Extinction (A<sub>V</sub> (mag); R<sub>V</sub>=3.1) 
-<textarea name="TBextinction" cols="10" rows="1">1.0</textarea>
+<textarea id="TBextinction" cols="10" rows="1">1.0</textarea>
 <!-- <input type="submit" value="Update" /> -->
 </form>
 

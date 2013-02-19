@@ -25,7 +25,7 @@ Pickles Stellar Spectral Flux Library
  * Adjustable redshift
  * Adjustable IMF (specify slope or adjust histogram?) and age
  * Show metallicity and SFR-adjustable emission lines
- * Zoomable
+ * ~~Zoomable~~
  * Fancy CSS
  * Updatable
  
@@ -39,6 +39,8 @@ Pickles Stellar Spectral Flux Library
 
 Maybe I should use this as my base: http://bl.ocks.org/mbostock/1667367
 
+
+Animation tutorial: http://blog.visual.ly/creating-animations-and-transitions-with-d3-js/
 
 
 

@@ -339,18 +339,19 @@ function update() {
   
   Sdata.forEach(updateW);
   Sdata.forEach(updateF);
-  
+    
   context.selectAll("path")
     .data([Sdata])
-    .attr("d",line2)
-    .transition()
+    .transition().ease("elastic")
     .duration(2000);
+    .attr("d",line2);
     
   focus.selectAll("path")
     .data([Sdata])
+    .transition().ease("elastic")
+    .duration(2000)
     .attr("d",line)
-    .transition()
-    .duration(2000);
+    .transition().ease("elastic");
     
     //   Set plot dimensions
   x.domain(d3.extent(Sdata.map(function(d) { return d.w; })));

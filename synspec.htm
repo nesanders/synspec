@@ -1,42 +1,328 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <title>Galaxy spectrum synthesizer</title>
-<style>
+<link href="synstyle.css" rel="stylesheet" type="text/css" media="screen"/>
 
-body {
-  font: 10px sans-serif;
-}
-
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-
-.x.axis path {
-  display: none;
-}
-
-.line {
-  fill: none;
-  stroke: steelblue;
-  stroke-width: 1.5px;
-}
-
-.overlay {
-  fill: none;
-  pointer-events: all;
-}
-
-.focus circle {
-  fill: none;
-  stroke: steelblue;
-}
-
-</style>
 <body>
-<script src="http://d3js.org/d3.v3.js"></script>
+
+<script src="d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 10, right: 10, bottom: 150, left: 40},
+    margin2 = {top: 380, right: 10, bottom: 40, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom,
+    height2 = 500 - margin2.top - margin2.bottom;
+
+var x = d3.scale.linear().range([0, width]),
+    x2 = d3.scale.linear().range([0, width]),
+    y = d3.scale.linear().range([height, 0]),
+    y2 = d3.scale.linear().range([height2, 0]);
+
+var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+    xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
+    yAxis = d3.svg.axis().scale(y).orient("left");
+
+var brush = d3.svg.brush()
+    .x(x2)
+    .on("brush", brush);
+
+//Create big line plot
+var line = d3.svg.line()
+    .interpolate("monotone")
+    .x(function(d) { return x(d.w); })
+    .y(function(d) { return y(d.f); });
+
+//Create little line plot
+var line2 = d3.svg.line()
+    .interpolate("monotone")
+    .x(function(d) { return x2(d.w); })
+    .y(function(d) { return y2(d.f); });
+
+// Create passband plot
+var area_PB_u = d3.svg.area()
+  .interpolate("monotone")
+  .x(function(pd) { return x2(pd.w); })
+  .y0(function(pd) { return y2(0); })
+  .y1(function(pd) { return y2(pd.f); });
+var area_PB_b = d3.svg.area()
+  .interpolate("monotone")
+  .x(function(pd) { return x2(pd.w); })
+  .y0(function(pd) { return y2(0); })
+  .y1(function(pd) { return y2(pd.f); });
+var area_PB_v = d3.svg.area()
+  .interpolate("monotone")
+  .x(function(pd) { return x2(pd.w); })
+  .y0(function(pd) { return y2(0); })
+  .y1(function(pd) { return y2(pd.f); });
+var area_PB_r = d3.svg.area()
+  .interpolate("monotone")
+  .x(function(pd) { return x2(pd.w); })
+  .y0(function(pd) { return y2(0); })
+  .y1(function(pd) { return y2(pd.f); });
+var area_PB_i = d3.svg.area()
+  .interpolate("monotone")
+  .x(function(pd) { return x2(pd.w); })
+  .y0(function(pd) { return y2(0); })
+  .y1(function(pd) { return y2(pd.f); });
+
+
+//SVG canvas for whole page
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+
+svg.append("defs").append("clipPath")
+    .attr("id", "clip")
+  .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
+var focus = svg.append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var context = svg.append("g")
+    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+d3.tsv("NES_pickles.tsv", function(error, data) {
+  data.forEach(function(d) {
+    d.w = +d.w;
+    d.biii = +d.biii;
+    d.aiii = +d.aiii;
+    d.fiii = +d.fiii;
+    d.giii = +d.giii;
+    d.kiii = +d.kiii;
+    d.miii = +d.miii;
+    d.bv = +d.bv;
+    d.av = +d.av;
+    d.fv = +d.fv;
+    d.gv = +d.gv;
+    d.kv = +d.kv;
+    d.mv = +d.mv;
+    //silly synthetic spectrum
+    d.f = 0.5*d.miii + 0.1*d.biii + 2*d["fv"];
+    // Load each stellar class spectrum with a loop
+    fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
+  });
+
+  x.domain(d3.extent(data.map(function(d) { return d.w; })));
+  y.domain([0, d3.max(data.map(function(d) { return d.f; }))]);
+  x2.domain(x.domain());
+  y2.domain(y.domain());
+
+// Draw line - big plot
+  focus.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("clip-path", "url(#clip)")
+      .attr("d", line);
+
+//   Setup x axis - big plot
+  focus.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+//   Setup y axis - big plot
+  focus.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -35)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Flux");
+
+  // Draw line - little plot
+  context.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line2);
+
+  //   Setup x axis - little plot
+  context.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height2 + ")")
+      .call(xAxis2)
+      // Draw ticks
+      .append("text")
+      // Label placement
+      .attr("x", 200)
+      .attr("y", 30)
+      .attr("dx", ".71em")
+      .style("text-anchor", "end")
+      .text("Observed wavelength (Angstroms)");
+
+  //   Setup little plot brush rectangle
+  context.append("g")
+      .attr("class", "x brush")
+      .call(brush)
+      .selectAll("rect")
+      .attr("y", -6)
+      .attr("height", height2 + 7);
+
+
+
+//////////////////////////
+// Load passband data
+//////////////////////////
+d3.tsv("passbands/bess-u.pass", function(error, pdata) {
+  pdata.forEach(function(pd) {
+    pd.w=+pd.w;
+    pd.f=+pd.f;
+  });
+  // draw passband
+  context.append("path")
+	.datum(pdata)
+	.attr("d", area_PB_u)
+	.style("fill","rgb(0,0,250)")
+	.style("opacity","0.5")
+	.attr("class","pbu");
+});
+d3.tsv("passbands/bess-b.pass", function(error, pdata) {
+  pdata.forEach(function(pd) {
+    pd.w=+pd.w;
+    pd.f=+pd.f;
+  });
+  // draw passband
+  context.append("path")
+	.datum(pdata)
+	.attr("d", area_PB_b)
+	.style("fill","rgb(0,0,150)")
+	.style("opacity","0.5")
+	.attr("class","pbb");
+});
+d3.tsv("passbands/bess-v.pass", function(error, pdata) {
+  pdata.forEach(function(pd) {
+    pd.w=+pd.w;
+    pd.f=+pd.f;
+  });
+  // draw passband
+  context.append("path")
+	.datum(pdata)
+	.attr("d", area_PB_v)
+	.style("fill","rgb(150,150,0)")
+	.style("opacity","0.5")
+	.attr("class","pbv");
+});
+d3.tsv("passbands/bess-r.pass", function(error, pdata) {
+  pdata.forEach(function(pd) {
+    pd.w=+pd.w;
+    pd.f=+pd.f;
+  });
+  // draw passband
+  context.append("path")
+	.datum(pdata)
+	.attr("d", area_PB_r)
+	.style("fill","rgb(250,0,0)")
+	.style("opacity","0.5")
+	.attr("class","pbr");
+});
+d3.tsv("passbands/bess-i.pass", function(error, pdata) {
+  pdata.forEach(function(pd) {
+    pd.w=+pd.w;
+    pd.f=+pd.f;
+  });
+  // draw passband
+  context.append("path")
+	.datum(pdata)
+	.attr("d", area_PB_i)
+	.style("fill","rgb(100,0,0)")
+	.style("opacity","0.5")
+	.attr("class","pbi");
+});
+
+function brush() {
+  x.domain(brush.empty() ? x2.domain() : brush.extent());
+  focus.select("path").attr("d", line);
+  focus.select(".x.axis").call(xAxis);
+}
+
+function update() {
+  // Get user data
+  var redshift = document.getElementById('TBredshift');
+  var extinction = document.getElementById('TBextinction');
+
+  // Update galaxy spectra
+  line
+    .transition()
+    .attr("x",function(d) { return x(d.w*(1+redshift)); })
+    .attr("y",function(d) { return y(d.f); });
+
+  line2
+    .transition()
+    .x(function(d) { return x(d.w*(1+redshift)); })
+    .y(function(d) { return y(d.f); });
+}
+
+function CCMextinct(l,EBmV,Rv) {
+    // Calculate flux supression at a given wavelength based on the M.W. extinction law of
+    // Cardelli, Clayton, and Mathis (1989ApJ...345..245C).
+    /////////////////////
+    // Calculate inverse microns
+    var x=1/(l/1e4);
+    var y=x-1.82;
+    // What regime are we in?
+    if (x > 0.3 && x < 1.1) { // Optical/NIR
+      a=Math.pow(0.574*x,1.61);
+      b=Math.pow(-0.527*x,1.61);
+    }
+    if (x > 1.1 && x < 3.3) {
+      a=1+0.17699*y-0.50447*Math.pow(y,2)-0.02427*Math.pow(y,3)+0.72085*Math.pow(y,4)+0.01979*Math.pow(y,5)-0.77530*Math.pow(y,6)+0.32999*Math.pow(y,7);
+      b=1.41338*y+2.28305*Math.pow(y,2)+1.07233*Math.pow(y,3)-5.38434*Math.pow(y,4)-0.62251*Math.pow(y,5)+5.30260*Math.pow(y,6)-2.09002*Math.pow(y,7);
+    }
+    
+    var Fa=-0.04473*Math.pow((x-5.9),2)-0.009779*Math.pow((x-5.9),3);
+    var Fb=0.2130*Math.pow((x-5.9),2)+0.1207*Math.pow((x-5.9),3);
+    if (x > 3.3 && x < 8) { /// UV and FUV
+      a=1.752-0.316*x-0.104/(Math.pow((x-4.67),2)+0.341)+Fa;
+      b=-3.090+1.825*x+1.206/(Math.pow((x-4.62),2)+0.263)+Fb;
+    }
+    if (x > 8 && x < 10) {
+      a=-1.073-0.628*(x-8)+0.137*Math.pow((x-8),2)-0.070*Math.pow((x-8),3);
+      b=13.670+4.257*(x-8)-0.420*Math.pow((x-8),2)+0.374*Math.pow((x-8),3);
+    }
+    //Calculate extinction in magnitudes
+    var AV = EBmV*Rv;
+    var Al = (a+b/Rv)*(AV);
+    return Math.pow(10,Al/2.5);
+}
+});
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--
 <script>
 
 var margin = {top: 20, right: 50, bottom: 30, left: 50},
@@ -62,60 +348,120 @@ var yAxis = d3.svg.axis()
     .scale(y)
     .orient("left");
 
-var line = d3.svg.line()
-    .x(function(d) { return x(d.w); })
-    .y(function(d) { return y(d.f); });
+var redshift = document.getElementById('TBredshift');
+var extinction = document.getElementById('TBextinction');
 
+var line = d3.svg.line()
+    .interpolate("step-after")
+    .x(function(d) { return x(d.w*(1+redshift)); })
+    .y(function(d) { return y(d.f*CCMextinct(d.w,extinction/3.1,3.1)); });
+
+// Build the plot itself
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+// Setup zoom behvior
+var zoom = d3.behavior.zoom()
+    .on("zoom", draw);
 
+function CCMextinct(l,EBmV,Rv)
+{
+    // Calculate flux supression at a given wavelength based on the M.W. extinction law of
+    // Cardelli, Clayton, and Mathis (1989ApJ...345..245C).
+    /////////////////////
+    // Calculate inverse microns
+    var x=1/(l/1e4);
+    var y=x-1.82;
+    // What regime are we in?
+    if (x > 0.3 && x < 1.1) { // Optical/NIR
+      a=Math.pow(0.574*x,1.61);
+      b=Math.pow(-0.527*x,1.61);
+    }
+    if (x > 1.1 && x < 3.3) {
+      a=1+0.17699*y-0.50447*Math.pow(y,2)-0.02427*Math.pow(y,3)+0.72085*Math.pow(y,4)+0.01979*Math.pow(y,5)-0.77530*Math.pow(y,6)+0.32999*Math.pow(y,7);
+      b=1.41338*y+2.28305*Math.pow(y,2)+1.07233*Math.pow(y,3)-5.38434*Math.pow(y,4)-0.62251*Math.pow(y,5)+5.30260*Math.pow(y,6)-2.09002*Math.pow(y,7);
+    }
+    
+    var Fa=-0.04473*Math.pow((x-5.9),2)-0.009779*Math.pow((x-5.9),3);
+    var Fb=0.2130*Math.pow((x-5.9),2)+0.1207*Math.pow((x-5.9),3);
+    if (x > 3.3 && x < 8) { /// UV and FUV
+      a=1.752-0.316*x-0.104/(Math.pow((x-4.67),2)+0.341)+Fa;
+      b=-3.090+1.825*x+1.206/(Math.pow((x-4.62),2)+0.263)+Fb;
+    }
+    if (x > 8 && x < 10) {
+      a=-1.073-0.628*(x-8)+0.137*Math.pow((x-8),2)-0.070*Math.pow((x-8),3);
+      b=13.670+4.257*(x-8)-0.420*Math.pow((x-8),2)+0.374*Math.pow((x-8),3);
+    }
+    //Calculate extinction in magnitudes
+    var AV = EBmV*Rv;
+    var Al = (a+b/Rv)*(AV);
+    return Math.pow(10,Al/2.5);
+}
 
 
 /////////////////////////////
 //     Load data
 /////////////////////////////
 
-d3.tsv("NES_a0i.dat", function(error, data) {
+// Declare data as global variable
+var Gdata
+
+d3.tsv("NES_pickles.tsv", function(error, data) {  // d3.tsv("NES_a0i.dat", function(error, data) {
   data.forEach(function(d) {
     d.w = +d.w;
-    d.f = +d.f;
-  });
+    d.biii = +d.biii;
+    d.aiii = +d.aiii;
+    d.fiii = +d.fiii;
+    d.giii = +d.giii;
+    d.kiii = +d.kiii;
+    d.miii = +d.miii;
+    d.bv = +d.bv;
+    d.av = +d.av;
+    d.fv = +d.fv;
+    d.gv = +d.gv;
+    d.kv = +d.kv;
+    d.mv = +d.mv;
+    //silly synthetic spectrum
+    d.f = 0.5*d.miii + 0.1*d.biii + 2*d["fv"];
+    // Load each stellar class spectrum with a loop
+    fkeys = d3.keys(data[0]).filter(function(key) { return key !== "w"; });
+  }
+);
   
-// d3.tsv("data.tsv", function(error, data) {
-//   data.forEach(function(d) {
-//     d.date = parseDate(d.date);
-//     d.close = +d.close;
-//   });
-// 
-//   data.sort(function(a, b) {
-//     return a.date - b.date;
-//   });
-
   //   Set axis range
   x.domain(d3.extent(data, function(d) { return d.w; }));
   y.domain(d3.extent(data, function(d) { return d.f; }));
+  zoom.x(x);
 
+  //   Setup x axis
   svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis)
+      // Draw ticks
+      .append("text")
+      // Label placement
+      .attr("x", 200)
+      .attr("y", 30)
+      .attr("dx", ".71em")
       .style("text-anchor", "end")
-      .text("Wavelength (Angstroms)");
-
+      .text("Observed wavelength (Angstroms)");
+  
+  //   Setup y axis
   svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
-    .append("text")
+      .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
       .text("Flux");
 
+  // Draw spectrum line
   svg.append("path")
       .datum(data)
       .attr("class", "line")
@@ -139,20 +485,88 @@ d3.tsv("NES_a0i.dat", function(error, data) {
       .attr("height", height)
       .on("mouseover", function() { focus.style("display", null); })
       .on("mouseout", function() { focus.style("display", "none"); })
-      .on("mousemove", mousemove);
+      .on("mousemove", mousemove)
+      .call(zoom);
 
   function mousemove() {
     var x0 = x.invert(d3.mouse(this)[0]),
-        i = x0, //bisectDate(data, x0, 1),
+        i = bisectDate(data, x0, 1),
         d0 = data[i - 1],
         d1 = data[i],
         d = x0 - d0.w > d1.w - x0 ? d1 : d0;
     focus.attr("transform", "translate(" + x(d.w) + "," + y(d.f) + ")");
-//     focus.select("text").text(formatCurrency(d.f));
+    // What to draw on the mouseover
+    focus.select("text").text(d.f);
   }
+  
+  //////////////////////////
+  // Load passband data
+  //////////////////////////
+  d3.tsv("passbands/bess-b.pass", function(error, pdata) {
+    pdata.forEach(function(pd) {
+      pd.w=+pd.w;
+      pd.f=+pd.f;
+    });
+    // draw passband
+    var area = d3.svg.area()
+      .interpolate("basis")
+      .x(function(pd) { return x(pd.w); })
+//       .y0(function(pd) { return y(0); });
+      .y1(function(pd) { return y(pd.f); });
+    
+    svg.append("clipPath")
+	.attr("id", "clip-below")
+      .append("path")
+	.attr("d", area.y0(height));
+
+    svg.append("clipPath")
+	.attr("id", "clip-above")
+      .append("path")
+	.attr("d", area.y0(0));
+
+    svg.append("path")
+	.attr("class", "area above")
+	.attr("clip-path", "url(#clip-above)")
+	.attr("d", area.y0(function(pd) { return y(pd.f); }));
+
+    svg.append("path")
+	.attr("class", "area below")
+	.attr("clip-path", "url(#clip-below)")
+	.attr("d", area);
+
+    svg.append("path")
+	.attr("class", "line")
+	.attr("d", line);
+    
+  });
+  
+  svg.select("path.area").data([data]);
+  svg.select("path.line").data([data]);
+  draw();
 });
 
-</script>
+function draw() {
+  svg.select("g.x.axis").call(xAxis);
+  svg.select("g.y.axis").call(yAxis);
+  svg.select("path.area").attr("d", area);
+  svg.select("path.line").attr("d", line);
+}
+
+</script>-->
 
 
+<form method="post" action="">
+Redshift 
+<textarea name="TBredshift" cols="10" rows="1">0.0</textarea>
+<!-- <input type="submit" value="Update" /> -->
+
+<br>
+Extinction (A<sub>V</sub> (mag); R<sub>V</sub>=3.1) 
+<textarea name="TBextinction" cols="10" rows="1">1.0</textarea>
+<!-- <input type="submit" value="Update" /> -->
+</form>
+
+<button onclick="update()">Update</button>
+
+</body>
 

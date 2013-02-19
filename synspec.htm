@@ -39,7 +39,7 @@ var line2 = d3.svg.line()
     .x(function(d) { return x2(d.w); })
     .y(function(d) { return y2(d.f); });
 
-// Create passband plot
+// Create passband plots
 var area_PB_u = d3.svg.area()
   .interpolate("monotone")
   .x(function(pd) { return x2(pd.w); })
@@ -72,15 +72,18 @@ var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
 
+//Clip things that go off the reservation
 svg.append("defs").append("clipPath")
     .attr("id", "clip")
   .append("rect")
     .attr("width", width)
     .attr("height", height);
 
+// Set up the big plot
 var focus = svg.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+// Set up the little plot
 var context = svg.append("g")
     .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
@@ -154,15 +157,6 @@ d3.tsv("NES_pickles.tsv", function(error, data) {
       .style("text-anchor", "end")
       .text("Observed wavelength (Angstroms)");
 
-  //   Setup little plot brush rectangle
-  context.append("g")
-      .attr("class", "x brush")
-      .call(brush)
-      .selectAll("rect")
-      .attr("y", -6)
-      .attr("height", height2 + 7);
-
-
 
 //////////////////////////
 // Load passband data
@@ -179,6 +173,10 @@ d3.tsv("passbands/bess-u.pass", function(error, pdata) {
 	.style("fill","rgb(0,0,250)")
 	.style("opacity","0.5")
 	.attr("class","pbu");
+  context.append("text")
+        .attr("class","pblabels")
+        .attr("transform", "translate(" + x2(pdata[10].w) + ","+ y2(0.3) +")")
+        .text('U');
 });
 d3.tsv("passbands/bess-b.pass", function(error, pdata) {
   pdata.forEach(function(pd) {
@@ -192,6 +190,10 @@ d3.tsv("passbands/bess-b.pass", function(error, pdata) {
 	.style("fill","rgb(0,0,150)")
 	.style("opacity","0.5")
 	.attr("class","pbb");
+  context.append("text")
+        .attr("class","pblabels")
+        .attr("transform", "translate(" + x2(pdata[5].w) + ","+ y2(0.3) +")")
+        .text('B');
 });
 d3.tsv("passbands/bess-v.pass", function(error, pdata) {
   pdata.forEach(function(pd) {
@@ -205,6 +207,10 @@ d3.tsv("passbands/bess-v.pass", function(error, pdata) {
 	.style("fill","rgb(150,150,0)")
 	.style("opacity","0.5")
 	.attr("class","pbv");
+  context.append("text")
+        .attr("class","pblabels")
+        .attr("transform", "translate(" + x2(pdata[5].w) + ","+ y2(0.3) +")")
+        .text('V');
 });
 d3.tsv("passbands/bess-r.pass", function(error, pdata) {
   pdata.forEach(function(pd) {
@@ -218,6 +224,10 @@ d3.tsv("passbands/bess-r.pass", function(error, pdata) {
 	.style("fill","rgb(250,0,0)")
 	.style("opacity","0.5")
 	.attr("class","pbr");
+  context.append("text")
+        .attr("class","pblabels")
+        .attr("transform", "translate(" + x2(pdata[10].w) + ","+ y2(0.3) +")")
+        .text('R');
 });
 d3.tsv("passbands/bess-i.pass", function(error, pdata) {
   pdata.forEach(function(pd) {
@@ -231,9 +241,25 @@ d3.tsv("passbands/bess-i.pass", function(error, pdata) {
 	.style("fill","rgb(100,0,0)")
 	.style("opacity","0.5")
 	.attr("class","pbi");
+  context.append("text")
+        .attr("class","pblabels")
+        .attr("transform", "translate(" + x2(pdata[10].w) + ","+ y2(0.3) +")")
+        .text('I');
 });
 
-function brush() {
+
+
+  //   Setup little plot brush rectangle
+  context.append("g")
+      .attr("class", "x brush")
+      .call(OnBrush)
+      .selectAll("rect")
+      .attr("y", -6)
+      .attr("height", height2 + 7);
+
+
+
+function OnBrush() {
   x.domain(brush.empty() ? x2.domain() : brush.extent());
   focus.select("path").attr("d", line);
   focus.select(".x.axis").call(xAxis);
